@@ -312,6 +312,27 @@ defmodule Gengo.API do
     end
   end
 
+  def jobs(pubkey, privkey, status \\ "reviewable", count \\ 10) do
+    data = get("/translate/jobs", pubkey, privkey, [status: status, count: count]) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: [%Gengo.API.JobItem{}]})
+    case data.opstat do
+      "error" ->
+        data.err
+      "ok" ->
+        data.response
+    end
+  end
+
+  def jobs_by_ids(pubkey, privkey, ids) when is_list(ids) do
+    ids_joined = ids |> Enum.join(",")
+    data = get("/translate/jobs/#{ids_joined}", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: [%Gengo.API.JobItem{}]})
+    case data.opstat do
+      "error" ->
+        data.err
+      "ok" ->
+        data.response
+    end
+  end
+
   # Order API
 
   def order(pubkey, privkey, id) when is_integer(id) do

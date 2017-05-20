@@ -5,6 +5,8 @@ Elixir client library for [Gengo API](http://developers.gengo.com)
 ## Supported Endpoints
 
 - [Post Jobs for translation](http://developers.gengo.com/v2/api_methods/jobs/#jobs-post)
+- [Get Job List by Status](http://developers.gengo.com/v2/api_methods/jobs/#jobs-get)
+- [Get Job List by IDs](http://developers.gengo.com/v2/api_methods/jobs/#jobs-by-id-get)
 - [Get Job](http://developers.gengo.com/v2/api_methods/job/#job-get)
 - [Get Job Feedback](http://developers.gengo.com/v2/api_methods/job/#feedback-get)
 - [Get Job Comments](http://developers.gengo.com/v2/api_methods/job/#comments-get)
