@@ -43,6 +43,11 @@ defmodule Gengo.API.JobItem do
   defstruct [:job_id, :order_id, :slug, :body_src, :body_tgt, :eta, :callback_url, :status, :auto_approve, :lc_src, :lc_tgt, :tier, :currency, :credits, :unit_count, :ctime]
 end
 
+defmodule Gengo.API.QuoteJobItem do
+  @derive [Poison.Encoder]
+  defstruct [:type, :custom_data, :credits, :currency, :unit_count, :eta, :lc_src_detected]
+end
+
 defmodule Gengo.API.Job do
   @derive [Poison.Encoder]
   defstruct [:job]
@@ -128,7 +133,7 @@ defmodule Gengo.API do
       {:ok, %HTTPoison.Response{status_code: 400}} ->
         throw "Bad Request"
       {:ok, %HTTPoison.Response{status_code: 404}} ->
-          throw "Not Found"
+        throw "Not Found"
       {:ok, %HTTPoison.Response{status_code: 500}} ->
         throw "Internal Server Error"
       {:error, %HTTPoison.Error{reason: reason}} ->
@@ -152,6 +157,22 @@ defmodule Gengo.API do
     end
   end
 
+  defp delete(path, pubkey, privkey, params \\ []) do
+    auth_params = auth(pubkey, privkey)
+    case HTTPoison.get("#{@url}#{path}", [], params: auth_params ++ params) do
+      {:ok, %HTTPoison.Response{body: _}} ->
+        nil
+      {:ok, %HTTPoison.Response{status_code: 400}} ->
+        throw "Bad Request"
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        throw "Not Found"
+      {:ok, %HTTPoison.Response{status_code: 500}} ->
+        throw "Internal Server Error"
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        IO.inspect reason
+    end
+  end
+
   # Services API
 
   def language_pairs(pubkey, privkey) do
@@ -166,6 +187,18 @@ defmodule Gengo.API do
 
   def languages(pubkey, privkey \\ "") do
     data = get("/translate/service/languages", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: [%Gengo.API.Language{}]})
+    case data.opstat do
+      "error" ->
+        data.err
+      "ok" ->
+        data.response
+    end
+  end
+
+  def quote(pubkey, privkey, jobs) do
+    payload = %{jobs: jobs}
+    resp_struct = %{jobs: [%Gengo.API.QuoteJobItem{}]}
+    data = post("/translate/service/quote", pubkey, privkey, payload) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: resp_struct})
     case data.opstat do
       "error" ->
         data.err
@@ -242,7 +275,7 @@ defmodule Gengo.API do
   # Job API
 
   def job(pubkey, privkey, id) when is_integer(id) do
-    data = get('/translate/job/#{id}', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Job{job: %Gengo.API.JobItem{}}})
+    data = get("/translate/job/#{id}", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Job{job: %Gengo.API.JobItem{}}})
     case data.opstat do
       "error" ->
         data.err
@@ -252,7 +285,7 @@ defmodule Gengo.API do
   end
 
   def job_comments(pubkey, privkey, id) when is_integer(id) do
-    data = get('/translate/job/#{id}/comments', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Comments{thread: [%Gengo.API.Comment{}]}})
+    data = get("/translate/job/#{id}/comments", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Comments{thread: [%Gengo.API.Comment{}]}})
     case data.opstat do
       "error" ->
         data.err
@@ -261,18 +294,8 @@ defmodule Gengo.API do
     end
   end
 
-  def job_feedback(pubkey, privkey, id) when is_integer(id) do
-    data = get('/translate/job/#{id}/feedback', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.JobFeedback{feedback: %Gengo.API.Feedback{}}})
-    case data.opstat do
-      "error" ->
-        data.err
-      "ok" ->
-        data.response.feedback
-    end
-  end
-
   def job_revisions(pubkey, privkey, id) when is_integer(id) do
-    data = get('/translate/job/#{id}/revisions', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.JobRevisions{revisions: [%Gengo.API.JobRevision{}]}})
+    data = get("/translate/job/#{id}/revisions", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.JobRevisions{revisions: [%Gengo.API.JobRevision{}]}})
     case data.opstat do
       "error" ->
         data.err
@@ -282,7 +305,7 @@ defmodule Gengo.API do
   end
 
   def job_revision(pubkey, privkey, job_id, revision_id) when is_integer(job_id) and is_integer(revision_id) do
-    data = get('/translate/job/#{job_id}/revision/#{revision_id}', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.JobRevision{revision: %Gengo.API.Revision{}}})
+    data = get("/translate/job/#{job_id}/revision/#{revision_id}", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.JobRevision{revision: %Gengo.API.Revision{}}})
     case data.opstat do
       "error" ->
         data.err
@@ -292,13 +315,17 @@ defmodule Gengo.API do
   end
 
   def job_feedback(pubkey, privkey, id) when is_integer(id) do
-    data = get('/translate/job/#{id}/feedback', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.JobFeedback{feedback: %Gengo.API.Feedback{}}})
+    data = get("/translate/job/#{id}/feedback", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.JobFeedback{feedback: %Gengo.API.Feedback{}}})
     case data.opstat do
       "error" ->
         data.err
       "ok" ->
         data.response.feedback
     end
+  end
+
+  def delete_job(pubkey, privkey, id) when is_integer(id) do
+    delete("/translate/job/#{id}", pubkey, privkey)
   end
 
   def post_jobs(pubkey, privkey, jobs) do
@@ -333,10 +360,21 @@ defmodule Gengo.API do
     end
   end
 
+  def post_job_comment(pubkey, privkey, id, comment) when is_integer(id) do
+    payload = %{body: comment}
+    data = post("/translate/job/#{id}/comment", pubkey, privkey, payload) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}})
+    case data.opstat do
+      "error" ->
+        data.err
+      "ok" ->
+        data.response
+    end
+  end
+
   # Order API
 
   def order(pubkey, privkey, id) when is_integer(id) do
-    data = get('/translate/order/#{id}', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Order{order: %Gengo.API.OrderItem{}}})
+    data = get("/translate/order/#{id}", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Order{order: %Gengo.API.OrderItem{}}})
     case data.opstat do
       "error" ->
         data.err
@@ -345,13 +383,28 @@ defmodule Gengo.API do
     end
   end
 
+  def delete_order(pubkey, privkey, id) when is_integer(id) do
+    delete("/translate/order/#{id}", pubkey, privkey)
+  end
+
   def order_comments(pubkey, privkey, id) when is_integer(id) do
-    data = get('/translate/order/#{id}/comments', pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Comments{thread: [%Gengo.API.Comment{}]}})
+    data = get("/translate/order/#{id}/comments", pubkey, privkey) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}, response: %Gengo.API.Comments{thread: [%Gengo.API.Comment{}]}})
     case data.opstat do
       "error" ->
         data.err
       "ok" ->
         data.response.thread
+    end
+  end
+
+  def post_order_comment(pubkey, privkey, id, comment) when is_integer(id) do
+    payload = %{body: comment}
+    data = post("/translate/order/#{id}/comment", pubkey, privkey, payload) |> Poison.decode!(as: %Gengo.API.Response{err: %Gengo.API.Error{}})
+    case data.opstat do
+      "error" ->
+        data.err
+      "ok" ->
+        data.response
     end
   end
 
