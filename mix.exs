@@ -3,10 +3,12 @@ defmodule Gengo.Mixfile do
 
   def project do
     [app: :gengo,
-     version: "0.1.0",
+     version: "0.1.1",
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     description: description(),
+     package: package(),
      deps: deps()]
   end
 
@@ -32,7 +34,23 @@ defmodule Gengo.Mixfile do
       {:httpoison, "~> 0.11.2"},
       {:poison, "~> 3.1"},
       {:ex_doc, ">= 0.0.0", only: :dev},
+      {:earmark, ">= 0.0.0", only: :dev},
       {:coverex, "~> 1.4.10", only: :test}
+    ]
+  end
+
+  defp description do
+    """
+    Elixir client for Gengo API
+    """
+  end
+
+  defp package do
+    [
+      files: ["lib", "config", "mix.exs", "README*", "LICENSE*"],
+      maintainers: ["Kelvin Tay"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/kelvintaywl/exgengo"}
     ]
   end
 end

@@ -1,6 +1,6 @@
 defmodule Gengo do
 
-  import Gengo.Request, only: [getreq: 1, getreq: 2, postreq: 2, delreq: 1]
+  import Gengo.Request, only: [getreq: 1, getreq: 2, postreq: 2, delreq: 1, putreq: 2]
 
   @endpoint "https://api.gengo.com/v2"
   @api_key_variable "GENGO_API_KEY"
