@@ -2,41 +2,13 @@
 
 Elixir client library for [Gengo API](http://developers.gengo.com)
 
-## Supported Endpoints
-
-- [Post Jobs for translation](http://developers.gengo.com/v2/api_methods/jobs/#jobs-post)
-- [Get Job List by Status](http://developers.gengo.com/v2/api_methods/jobs/#jobs-get)
-- [Get Job List by IDs](http://developers.gengo.com/v2/api_methods/jobs/#jobs-by-id-get)
-- [Get Job](http://developers.gengo.com/v2/api_methods/job/#job-get)
-- [Delete Job](http://developers.gengo.com/v2/api_methods/job/#job-delete)
-- [Get Job Feedback](http://developers.gengo.com/v2/api_methods/job/#feedback-get)
-- [Get Job Comments](http://developers.gengo.com/v2/api_methods/job/#comments-get)
-- [Post Job Comment](http://developers.gengo.com/v2/api_methods/job/#comment-post)
-- [Get Job Revision List](http://developers.gengo.com/v2/api_methods/job/#revisions-get)
-- [Get Job Revision](http://developers.gengo.com/v2/api_methods/job/#revision-get)
-- [Get Order](http://developers.gengo.com/v2/api_methods/order/#order-get)
-- [Delete Order](http://developers.gengo.com/v2/api_methods/order/#order-delete)
-- [Get Order Comments](http://developers.gengo.com/v2/api_methods/order/#comments-get)
-- [Post Order Comment](http://developers.gengo.com/v2/api_methods/order/#comment-post)
-- [Get Language Pairs](http://developers.gengo.com/v2/api_methods/service/#language-pairs-get)
-- [Get Languages](http://developers.gengo.com/v2/api_methods/service/#languages-get)
-- [Get Account Stats](http://developers.gengo.com/v2/api_methods/account/#stats-get)
-- [Get Account Personal](http://developers.gengo.com/v2/api_methods/account/#me-get)
-- [Get Account Balance](http://developers.gengo.com/v2/api_methods/account/#balance-get)
-- [Get Glossary List](http://developers.gengo.com/v2/api_methods/glossary/#glossaries-get)
-- [Get Glossary](http://developers.gengo.com/v2/api_methods/glossary/#glossary-get)
-- [Post Quote](http://developers.gengo.com/v2/api_methods/service/#quote-post)
-
-
 ## Usage
 
+Retrieve your [Gengo account's public & private keys](https://gengo.com/account/api_settings/)
+
+Set your Gengo API public key and private key via the `GENGO_API_KEY` and `GENGO_API_SECRET` environment variable respectively.
+
 ```elixir
-public_key = "HELLO"
-private_key = "HUSH"
-
-Gengo.API.language_pairs(public_key, private_key)
-# [%Gengo.API.LanguagePair{lc_src: "en", lc_tgt: "ja", tier: "standard", unit_price: 0.05, currency: "USD"}, ..]
-
-Gengo.API.me(public_key, private_key)
-# %Gengo.API.Account{display_name: "John", email: "johndoe@example.com",full_name: "John Doe", language_code: "en"}
+Gengo.me
+# %{display_name: "erlich.bachman", email: "erlich@pipedpiper.co", full_name: "Erlich Bachman", language_code: "en"}
 ```
